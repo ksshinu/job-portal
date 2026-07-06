@@ -10,22 +10,25 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import environ
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 1. Initialize environment variables system
+env = environ.Env(
+    DEBUG=(bool, False)  # Sets default to False if DEBUG isn't found in .env
+)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# 2. Read the actual .env file from your project root
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-)os)#ee+m8ner9rh++*m#g^jjeelo%53*-fvu)#ze1=%_kl!dl'
+# 3. Replace your old hardcoded values with dynamic lookups
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -42,6 +45,7 @@ INSTALLED_APPS = [
     'core',
     #Third-party apps
     'rest_framework',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -121,3 +125,29 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+AUTH_USER_MODEL = 'accounts.User'
+
+from datetime import timedelta
+
+# 1. Register REST Framework
+INSTALLED_APPS += [
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+]
+
+# 2. Set Up Default Global Authentication Schemes
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+# 3. Tune SimpleJWT Token Lifetimes (Task 2 Configuration Settings)
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,       # Hand back a new refresh token whenever used
+    'BLACKLIST_AFTER_ROTATION': True,   # Securely ban used refresh tokens
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,          # Uses your secure .env secret key!
+}

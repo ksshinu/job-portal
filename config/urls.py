@@ -15,9 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from core.views import ApplicationViewSet, JobViewSet, UserViewSet
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+from accounts.views import RegisterView, LogoutView
 
 # 1. Create a SINGLE router instance
 router = DefaultRouter()
@@ -27,10 +32,12 @@ router.register(r'jobs', JobViewSet, basename='job')
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'applications', ApplicationViewSet, basename='application')
 
-# 3. Define your SINGLE urlpatterns list
+# 3. Define your single urlpatterns list
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
-    # This automatically handles all generated endpoints for jobs, users, and applications!
     path('api/', include(router.urls)),
+    path('api/auth/register/', RegisterView.as_view(), name='auth_register'),
+    path('api/auth/login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/logout/', LogoutView.as_view(), name='auth_logout'),
 ]
